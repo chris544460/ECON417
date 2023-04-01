@@ -181,11 +181,13 @@ function U(c)
    return log(c) # log utility function
 end
 
-function valueFunctionIteration(N, k_ss, F, U; alpha=0.4, beta=0.9, delta=0.1, toler=1.0e-10, maxiter=5000)
+
+
+function optimal_value_function(N, k_steadyState, F, U; alpha=0.4, beta=0.9, delta=0.1, toler=1.0e-10, maxiter=5000)
 
     v0 = zeros(N)
-    A = creategrid(0.5*k_ss, 1.5*k_ss, N)
-    k_spline = makespline(A, v0)
+    A = creategrid(0.5*k_steadyState, 1.5*k_steadyState, N)
+    spline_ = makespline(A, v0)
     iter = 1
 
     while iter < maxiter
@@ -194,21 +196,21 @@ function valueFunctionIteration(N, k_ss, F, U; alpha=0.4, beta=0.9, delta=0.1, t
         kstar = zeros(N)
 
         for i in 1:N
-            Fki = F(A[i])
-            (v_max, k_max) = brent(0, Fki / 2, Fki, kprime -> - (U(Fki - kprime) + beta * interp(kprime, k_spline)[1]), 1.0e-8, 1.0e-8)
+            fk = F(A[i])
+            (v_min, k_min) = brent(0, fk / 2, fk, kprime -> U(fk - kprime + 1e-10) + beta * interp(kprime, spline_)[1], 1.0e-8, 1.0e-8)
 
-            V1[i] = -v_max
-            kstar[i] = k_max
+            V1[i] = max(v_min, 0)
+            kstar[i] = k_min
 
         end
 
         distance = maximum(abs.(V1 - v0))
 
         if distance < toler
-            return V1, kstar, k_spline
+            return V1, kstar, spline_
         else
             v0 = V1
-            k_spline = makespline(A, v0)
+            spline_ = makespline(A, v0)
         end
 
     end
@@ -216,22 +218,5 @@ function valueFunctionIteration(N, k_ss, F, U; alpha=0.4, beta=0.9, delta=0.1, t
     return "Value function iteration did not converge"
 
 end
-
-# define the parameters
-alpha = 0.4
-beta = 0.9
-delta = 0.1
-tolerance = 1e-6
-
-# define the steady state capital
-k_ss = ((1/beta - 1 + delta)/alpha)^(1/(alpha-1)) # 
-
-vstar, kstar, optimal_spline = valueFunctionIteration(15, k_ss, f, U)
-
-using Plots
-# plot the optimal value function
-plot(optimal_spline.x, optimal_spline.y, label="optimal value function", xlabel="k", ylabel="v(k)", legend=:topleft)
-
-
 
 
