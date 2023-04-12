@@ -1,0 +1,10 @@
+Hi Christian,
+
+I read your steps carefully, and I think that they are good.
+
+One comment: please try with small number of assets (e.g., 2 assets) first to understand the problem and the algorithm, and then increase the number of assets.
+
+There might be analytical solution to this problem as well, such that you could compare it with your numerical solution.
+
+Best regards,
+Songyuan
